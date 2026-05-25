@@ -49,7 +49,7 @@ NAIROBI_COUNTY_BOUNDARY = [
     [-1.1500, 36.6500]
 ]
 
-# Sub-county boundary approximations
+# Sub-county boundary approximations (Blue lines)
 SUB_COUNTY_BOUNDARIES = {
     'Kasarani': {
         'bounds': [
@@ -788,33 +788,46 @@ def create_nairobi_map_with_boundaries(facilities_df):
         popup='<b>Nairobi County</b><br>Capital city of Kenya'
     ).add_to(m)
     
-    # Add all sub-county boundaries (thin light blue dashed lines)
+    # Add all sub-county boundaries (Blue solid lines)
     for sub_county, data in SUB_COUNTY_BOUNDARIES.items():
         bounds = data['bounds']
         
+        # Add blue boundary line for each sub-county
         folium.Polygon(
             locations=bounds,
-            color='#4A90E2',
-            weight=2,
+            color='#0055CC',  # Bright blue color
+            weight=2.5,
             fill=False,
-            opacity=0.6,
-            dash_array='5,5',
+            opacity=0.8,
             tooltip=f'{sub_county} Sub-County'
         ).add_to(m)
         
-        # Add sub-county label with facility count
+        # Add sub-county label with facility count (minimal design)
         facility_count = len(facilities_df[facilities_df['Sub-County'] == sub_county]) if sub_county in facilities_df['Sub-County'].values else 0
         
-        if facility_count > 0:
-            label_html = f'<div style="font-size: 9px; font-weight: bold; background: white; padding: 2px 6px; border-radius: 10px; border: 1.5px solid #4A90E2; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">{sub_county}<br><span style="font-size: 7px;">{facility_count} facilities</span></div>'
-        else:
-            label_html = f'<div style="font-size: 8px; background: #f0f0f0; padding: 2px 5px; border-radius: 8px; border: 1px dashed #999;">{sub_county}</div>'
+        # Simple clean label
+        label_html = f'''
+        <div style="
+            background: white; 
+            padding: 2px 8px; 
+            border-radius: 12px; 
+            border: 2px solid #0055CC;
+            font-size: 10px;
+            font-weight: bold;
+            color: #0055CC;
+            font-family: Arial, sans-serif;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        ">
+            {sub_county}<span style="color:#666; margin-left:4px;">({facility_count})</span>
+        </div>
+        '''
         
         folium.map.Marker(
             data['center'],
             icon=folium.DivIcon(
-                icon_size=(90, 25),
-                icon_anchor=(45, 12),
+                icon_size=(100, 20),
+                icon_anchor=(50, 10),
                 html=label_html
             )
         ).add_to(m)
@@ -841,7 +854,7 @@ def create_nairobi_map_with_boundaries(facilities_df):
         control=True
     ).add_to(m)
     
-    # Add hospital markers
+    # Add hospital markers with improved tooltips
     for _, row in facilities_df.iterrows():
         facility_name = row['Facility Name']
         facility_type = row['Type']
@@ -852,7 +865,7 @@ def create_nairobi_map_with_boundaries(facilities_df):
         color = type_colors.get(facility_type, '#757575')
         radius = type_sizes.get(facility_type, 6)
         
-        # Create popup
+        # Create popup (appears on click)
         popup_html = f"""
         <div style="font-family: Arial, sans-serif; font-size: 12px; min-width: 240px;">
             <div style="background-color: {color}; color: white; padding: 8px; border-radius: 5px 5px 0 0;">
@@ -878,11 +891,12 @@ def create_nairobi_map_with_boundaries(facilities_df):
         </div>
         """
         
+        # Create marker with tooltip (appears on hover)
         folium.CircleMarker(
             location=[lat, lng],
             radius=radius,
             popup=folium.Popup(popup_html, max_width=350),
-            tooltip=f"{facility_name} ({facility_type})",
+            tooltip=f"🏥 {facility_name}\n📌 {facility_type}\n📍 {sub_county}",  # Clean tooltip on hover
             color=color,
             fill=True,
             fill_color=color,
@@ -891,32 +905,32 @@ def create_nairobi_map_with_boundaries(facilities_df):
             opacity=1
         ).add_to(marker_cluster)
     
-    # Add legend
+    # Add clean legend
     legend_html = '''
-    <div style="position: fixed; bottom: 50px; right: 50px; 
-                background-color: white; padding: 10px 12px;
-                border: 2px solid #ddd; border-radius: 8px;
-                z-index: 1000; font-size: 10px;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    <div style="position: fixed; bottom: 30px; right: 30px; 
+                background-color: white; padding: 12px 15px;
+                border: 2px solid #ddd; border-radius: 10px;
+                z-index: 1000; font-size: 11px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
                 font-family: Arial, sans-serif;
-                min-width: 160px;">
-        <b>🗺️ Map Legend</b><br>
-        <hr style="margin: 4px 0;">
-        <div style="margin: 5px 0;">
+                min-width: 170px;">
+        <b style="font-size: 12px;">🗺️ Legend</b><br>
+        <hr style="margin: 5px 0;">
+        <div style="margin: 8px 0;">
             <b>🏛️ Boundaries:</b><br>
-            <span style="display: inline-block; width: 25px; height: 2px; background: black; margin-right: 5px;"></span> County Boundary<br>
-            <span style="display: inline-block; width: 25px; height: 2px; background: #4A90E2; margin-right: 5px; border-style: dashed;"></span> Sub-County Boundary
+            <span style="display: inline-block; width: 25px; height: 3px; background: black; margin-right: 8px;"></span> County Boundary<br>
+            <span style="display: inline-block; width: 25px; height: 3px; background: #0055CC; margin-right: 8px;"></span> Sub-County Boundary
         </div>
-        <div style="margin: 5px 0;">
-            <b>🏥 Hospital Types:</b><br>
-            <span style="display: inline-block; width: 10px; height: 10px; background: #1E88E5; border-radius: 50%; margin-right: 5px;"></span> Private (Blue)<br>
-            <span style="display: inline-block; width: 10px; height: 10px; background: #000000; border-radius: 50%; margin-right: 5px;"></span> Public (Black)<br>
-            <span style="display: inline-block; width: 10px; height: 10px; background: #43A047; border-radius: 50%; margin-right: 5px;"></span> Faith Based (Green)<br>
-            <span style="display: inline-block; width: 10px; height: 10px; background: #E53935; border-radius: 50%; margin-right: 5px;"></span> NGO (Red)
+        <div style="margin: 8px 0;">
+            <b>🏥 Facility Types:</b><br>
+            <span style="display: inline-block; width: 12px; height: 12px; background: #1E88E5; border-radius: 50%; margin-right: 8px;"></span> Private<br>
+            <span style="display: inline-block; width: 12px; height: 12px; background: #000000; border-radius: 50%; margin-right: 8px;"></span> Public<br>
+            <span style="display: inline-block; width: 12px; height: 12px; background: #43A047; border-radius: 50%; margin-right: 8px;"></span> Faith Based<br>
+            <span style="display: inline-block; width: 12px; height: 12px; background: #E53935; border-radius: 50%; margin-right: 8px;"></span> NGO
         </div>
-        <hr style="margin: 4px 0;">
-        <div style="font-size: 8px; color: #666;">
-            ✅ Click any dot to see facility details
+        <hr style="margin: 5px 0;">
+        <div style="font-size: 9px; color: #666; text-align: center;">
+            💡 Hover over dots to see facility names
         </div>
     </div>
     '''
@@ -962,34 +976,27 @@ with st.sidebar:
     
     st.markdown("---")
     st.info("""
-    **🎨 Map Legend:**
-    - **Black line** = Nairobi County boundary
-    - **Blue dashed line** = Sub-County boundary
-    - **🔵 Blue dots** = Private hospitals
-    - **⚫ Black dots** = Public hospitals
-    - **🟢 Green dots** = Faith Based hospitals
-    - **🔴 Red dots** = NGO hospitals
-    
-    **💡 How to use:**
-    1. View the complete Nairobi County map
-    2. Click any colored dot to see hospital details
-    3. Hover over dots to see hospital names
-    4. Use +/- to zoom in/out
-    5. Boundaries show county and sub-county divisions
+    **🎨 How to use:**
+    - **Hover** over any dot to see facility name
+    - **Click** dot for detailed info
+    - **Blue lines** show sub-county boundaries
+    - **Black line** shows county boundary
+    - Use +/- to zoom in/out
     """)
 
 # Main content
 st.markdown("""
 <div style="background-color: #e8f4f8; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-    <h3>🗺️ Nairobi County - Complete Map with Boundaries</h3>
+    <h3>🗺️ Nairobi County Health Facilities Map</h3>
     <ul>
-        <li><strong>Thick black line</strong> = Nairobi County boundary</li>
-        <li><strong>Thin blue dashed lines</strong> = 17 Sub-County boundaries</li>
+        <li><strong>🔵 Blue lines</strong> = 17 Sub-County boundaries</li>
+        <li><strong>⚫ Black line</strong> = Nairobi County boundary</li>
         <li><strong>🔵 Blue dots</strong> = Private hospitals</li>
         <li><strong>⚫ Black dots</strong> = Public hospitals</li>
         <li><strong>🟢 Green dots</strong> = Faith Based hospitals</li>
         <li><strong>🔴 Red dots</strong> = NGO hospitals</li>
-        <li><strong>Click any dot</strong> to see the facility name and details</li>
+        <li><strong>💡 Hover over any dot</strong> to see facility name</li>
+        <li><strong>🖱️ Click any dot</strong> to see complete details</li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
@@ -1066,7 +1073,7 @@ st.markdown(
     "🏥 Nairobi Health Facilities Map | Complete Directory with County & Sub-County Boundaries<br>"
     f"📍 Total: {len(facilities_df)} facilities | "
     "🔵 Private | ⚫ Public | 🟢 Faith Based | 🔴 NGO<br>"
-    "✅ Click any colored dot to see facility name and details"
+    "💡 Hover over any dot to see facility name | Click for details"
     "</div>",
     unsafe_allow_html=True
 )
