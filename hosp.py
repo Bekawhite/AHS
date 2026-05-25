@@ -1,10 +1,11 @@
-# nairobi_health_facilities_complete.py
+# nairobi_health_map_fixed.py
 import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
 from folium.plugins import MarkerCluster, Search, Fullscreen
 import random
+import math
 from typing import Tuple, Dict, List
 
 # Page configuration
@@ -43,11 +44,30 @@ SUB_COUNTY_CENTERS = {
     'Starehe': [-1.2850, 36.8150]
 }
 
-# Complete facilities data with coordinates (generated programmatically)
+def generate_coordinates(sub_county, facility_index, facility_name, total_facilities):
+    """Generate realistic coordinates within sub-county boundaries"""
+    center = SUB_COUNTY_CENTERS[sub_county]
+    
+    # Create a spiral pattern for even distribution
+    angle = (facility_index * 137.5)  # Golden angle
+    radius = 0.003 + (facility_index % 20) * 0.0005  # Varying radius
+    
+    # Convert angle to radians
+    angle_rad = math.radians(angle)
+    
+    # Calculate offset
+    lat_offset = radius * math.cos(angle_rad) * 1.5
+    lng_offset = radius * math.sin(angle_rad) * 1.2
+    
+    # Add some randomness using facility name
+    random.seed(f"{sub_county}_{facility_name}")
+    lat_offset += (random.random() - 0.5) * 0.0005
+    lng_offset += (random.random() - 0.5) * 0.0005
+    
+    return [center[0] + lat_offset, center[1] + lng_offset]
+
 def generate_facilities_data():
     """Generate complete facilities data with realistic coordinates"""
-    
-    facilities = []
     
     # Kasarani facilities (34)
     kasarani_facilities = [
@@ -575,35 +595,10 @@ def generate_facilities_data():
         ("Coptic Hospital (Ngong Road)", "Faith Based"),
     ]
     
-    # Generate coordinates for each facility within its sub-county
-    def generate_coordinates(sub_county, facility_index, total_facilities):
-        """Generate realistic coordinates within sub-county boundaries"""
-        center = SUB_COUNTY_CENTERS[sub_county]
-        
-        # Create a spiral pattern for even distribution
-        angle = (facility_index * 137.5)  # Golden angle
-        radius = 0.003 + (facility_index % 20) * 0.0005  # Varying radius
-        
-        # Convert angle to radians
-        import math
-        angle_rad = math.radians(angle)
-        
-        # Calculate offset
-        lat_offset = radius * math.cos(angle_rad) * 1.5
-        lng_offset = radius * math.sin(angle_rad) * 1.2
-        
-        # Add some randomness
-        import random
-        random.seed(f"{sub_county}_{facility_name}")
-        lat_offset += (random.random() - 0.5) * 0.0005
-        lng_offset += (random.random() - 0.5) * 0.0005
-        
-        return [center[0] + lat_offset, center[1] + lng_offset]
-    
     # Process all facilities
     all_facilities = []
     
-    for sub_county, fac_list in [
+    facility_lists = [
         ("Kasarani", kasarani_facilities),
         ("Ruaraka", ruaraka_facilities),
         ("Dagoretti South", dagoretti_south_facilities),
@@ -612,9 +607,11 @@ def generate_facilities_data():
         ("Roysambu", roysambu_facilities),
         ("Westlands", westlands_facilities),
         ("Dagoretti North", dagoretti_north_facilities)
-    ]:
+    ]
+    
+    for sub_county, fac_list in facility_lists:
         for idx, (name, f_type) in enumerate(fac_list):
-            coords = generate_coordinates(sub_county, idx, len(fac_list))
+            coords = generate_coordinates(sub_county, idx, name, len(fac_list))
             all_facilities.append({
                 'Facility Name': name,
                 'Sub-County': sub_county,
@@ -641,7 +638,7 @@ def create_nairobi_county_map():
     m = folium.Map(
         location=[-1.2833, 36.8167],
         zoom_start=11,
-        tiles='CartoDB positron',  # Light-themed map
+        tiles='CartoDB positron',
         control_scale=True
     )
     
@@ -652,17 +649,20 @@ def create_nairobi_county_map():
     # Add fullscreen button
     Fullscreen().add_to(m)
     
-    # Color palette for sub-counties (soft, light-theme compatible)
+    # Color palette for sub-counties
     colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', 
               '#98D8C8', '#F7B787', '#B5EAD7', '#C7CEE6', '#E2F0CB', '#FFDAC1',
               '#E6E6FA', '#FFB7B2', '#B5EAD7', '#FFD1DC', '#A2E1E0']
+    
+    # Get sub-county counts
+    facilities_df = load_facilities()
+    sub_county_counts = facilities_df['Sub-County'].value_counts().to_dict()
     
     # Add sub-county markers
     for idx, (sub_county, center) in enumerate(SUB_COUNTY_CENTERS.items()):
         color = colors[idx % len(colors)]
         
-        # Count facilities in this sub-county
-        facility_count = len(facilities_df[facilities_df['Sub-County'] == sub_county]) if sub_county in facilities_df['Sub-County'].values else 0
+        facility_count = sub_county_counts.get(sub_county, 0)
         
         if facility_count > 0:
             popup_html = f"""
@@ -754,7 +754,7 @@ def create_nairobi_county_map():
     
     return m
 
-def create_subcounty_hospital_map(sub_county: str):
+def create_subcounty_hospital_map(sub_county: str, facilities_df):
     """Create detailed map showing all hospitals in a specific sub-county"""
     
     # Filter facilities for this sub-county
@@ -787,20 +787,11 @@ def create_subcounty_hospital_map(sub_county: str):
     
     # Color mapping for facility types
     type_colors = {
-        'Public': '#2E7D32',      # Dark green
-        'Private': '#1565C0',      # Blue
-        'Faith Based': '#6A1B9A',  # Purple
-        'NGO': '#E65100',          # Orange
-        'Unknown': '#757575'       # Gray
-    }
-    
-    # Type icons
-    type_icons = {
-        'Public': 'building',
-        'Private': 'plus',
-        'Faith Based': 'heart',
-        'NGO': 'hand-holding-heart',
-        'Unknown': 'question'
+        'Public': '#2E7D32',
+        'Private': '#1565C0',
+        'Faith Based': '#6A1B9A',
+        'NGO': '#E65100',
+        'Unknown': '#757575'
     }
     
     # Add markers for each facility
@@ -811,7 +802,6 @@ def create_subcounty_hospital_map(sub_county: str):
         lng = row['Longitude']
         
         color = type_colors.get(facility_type, '#757575')
-        icon_name = type_icons.get(facility_type, 'info-sign')
         
         # Create popup content
         popup_html = f"""
@@ -841,9 +831,7 @@ def create_subcounty_hospital_map(sub_county: str):
             location=[lat, lng],
             popup=folium.Popup(popup_html, max_width=400),
             tooltip=f"{facility_name} ({facility_type})",
-            icon=folium.Icon(color=color.split('#')[1] if '#' in color else color, 
-                           icon=icon_name, 
-                           prefix='fa')
+            icon=folium.Icon(color=color.replace('#', ''), icon='plus', prefix='fa')
         ).add_to(marker_cluster)
     
     # Add sub-county boundary visualization
@@ -921,9 +909,9 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("🏷️ Facilities by Type")
     type_counts = facilities_df['Type'].value_counts()
-    type_colors_display = {'Public': '🟢', 'Private': '🔵', 'Faith Based': '🟣', 'NGO': '🟠'}
+    type_icons = {'Public': '🟢', 'Private': '🔵', 'Faith Based': '🟣', 'NGO': '🟠'}
     for typ, count in type_counts.items():
-        icon = type_colors_display.get(typ, '⚪')
+        icon = type_icons.get(typ, '⚪')
         st.metric(f"{icon} {typ}", count)
     
     st.markdown("---")
@@ -995,7 +983,7 @@ else:
     
     # Create and display hospital map
     with st.spinner(f"Loading {st.session_state.selected_subcounty} hospitals..."):
-        hospital_map = create_subcounty_hospital_map(st.session_state.selected_subcounty)
+        hospital_map = create_subcounty_hospital_map(st.session_state.selected_subcounty, facilities_df)
         st_folium(hospital_map, width='100%', height=600)
     
     # Display statistics for this sub-county
