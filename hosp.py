@@ -21,33 +21,29 @@ st.markdown("### Complete Directory: 494 Health Facilities Across 17 Sub-Countie
 # NAIROBI COUNTY BOUNDARY COORDINATES (Simplified polygon)
 # ============================================================================
 
-# Nairobi County boundary (approximate polygon)
+# Nairobi County boundary points (from your Excel sheet 1)
 NAIROBI_COUNTY_BOUNDARY = [
-    [-1.1500, 36.6500],  # Northwest
-    [-1.1400, 36.7000],
-    [-1.1300, 36.7500],
-    [-1.1350, 36.8000],
-    [-1.1400, 36.8500],
-    [-1.1500, 36.9000],
-    [-1.1700, 36.9300],
-    [-1.2000, 36.9500],
-    [-1.2500, 36.9600],
-    [-1.3000, 36.9500],
-    [-1.3500, 36.9300],
-    [-1.3800, 36.9000],
-    [-1.4000, 36.8700],
-    [-1.4200, 36.8400],
-    [-1.4300, 36.8000],
-    [-1.4200, 36.7500],
-    [-1.4000, 36.7200],
-    [-1.3700, 36.6900],
-    [-1.3400, 36.6600],
-    [-1.3000, 36.6400],
-    [-1.2500, 36.6300],
-    [-1.2000, 36.6400],
-    [-1.1700, 36.6500],
-    [-1.1500, 36.6500]
+    [-1.1700, 36.9300],  # N1 - North – Ruiru/Githunguri boundary
+    [-1.1750, 36.9700],  # N2 - Northeast – Ruiru town area
+    [-1.1900, 37.0100],  # N3 - East – Juja/Thika Rd boundary
+    [-1.2100, 37.0300],  # N4 - East – Kasarani/Ruai boundary
+    [-1.2500, 37.0500],  # N5 - Southeast – Ruai/Joska boundary
+    [-1.2900, 37.0200],  # N6 - Southeast – Embakasi East boundary
+    [-1.3500, 36.9800],  # N7 - South – Athi River road boundary
+    [-1.3600, 36.9300],  # N8 - South – Airport/Embakasi South
+    [-1.3500, 36.8800],  # N9 - South – Mukuru/Ngong Rd boundary
+    [-1.3800, 36.8200],  # N10 - South – Langata/Karen boundary
+    [-1.3700, 36.7600],  # N11 - Southwest – Karen/Ngong boundary
+    [-1.3300, 36.7000],  # N12 - West – Dagoretti/Kikuyu boundary
+    [-1.2900, 36.6800],  # N13 - West – Uthiru/Kikuyu boundary
+    [-1.2600, 36.7000],  # N14 - West – Kangemi/Lari boundary
+    [-1.2300, 36.7400],  # N15 - Northwest – Westlands/Lari boundary
+    [-1.2000, 36.8000],  # N16 - Northwest – Gigiri/Kiambu boundary
+    [-1.1900, 36.8500],  # N17 - North – Ruaraka/Kiambu boundary
+    [-1.1800, 36.9000],  # N18 - North – Kasarani/Kiambu boundary
+    [-1.1700, 36.9300],  # N19 - North – Back to start
 ]
+
 
 # Sub-county boundary approximations (Blue lines)
 SUB_COUNTY_BOUNDARIES = {
